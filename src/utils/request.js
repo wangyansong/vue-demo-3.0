@@ -1,46 +1,42 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
+import store from '@/store'
+import { getToken } from '@/utils/auth'
 
-// 创建axios 实例
+// create an axios instance
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API, // api的base_url
-  timeout: 10000 // 请求超时时间
+  baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
+  // withCredentials: true, // send cookies when cross-domain requests
+  timeout: 5000 // request timeout
 })
 
-// request 拦截器
+// request interceptor
 service.interceptors.request.use(
   config => {
-    // 这里可以自定义一些config 配置
+    // do something before request is sent
 
+    if (store.getters.token) {
+      // 处理header
+      config.headers['X-Token'] = getToken()
+    }
     return config
   },
   error => {
-    //  这里处理一些请求出错的情况
-
-    Promise.reject(error)
+    return Promise.reject(error)
   }
 )
 
-// response 拦截器
 service.interceptors.response.use(
   response => {
     const res = response.data
-    if (!res) {
-      Message({
-        message: res.message,
-        type: 'error',
-        showClose: true,
-        duration: 2 * 1000
-      })
-    }
     return res
   },
   error => {
+    console.log('err' + error) // for debug
     Message({
-      message: 'error...',
+      message: error.message,
       type: 'error',
-      showClose: true,
-      duration: 2 * 1000
+      duration: 5 * 1000
     })
     return Promise.reject(error)
   }
